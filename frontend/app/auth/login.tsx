@@ -27,7 +27,8 @@ export default function Login() {
     setErr(null);
     try {
       await login(email.trim(), password);
-      router.replace("/(tabs)/home");
+      const u = useAuth.getState().user;
+      router.replace(u?.role === "teacher" ? "/teacher/dashboard" : "/(tabs)/home");
     } catch (e: any) {
       setErr(e.message || "Login failed");
     }

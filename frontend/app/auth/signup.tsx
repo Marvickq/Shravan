@@ -9,7 +9,7 @@ import {
   Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { H1, Body, Button } from "@/src/ui";
 import { useTheme } from "@/src/theme";
@@ -18,6 +18,8 @@ import { useAuth } from "@/src/auth";
 export default function Signup() {
   const { c, RADIUS } = useTheme();
   const router = useRouter();
+  const params = useLocalSearchParams<{ role?: string }>();
+  const role = params.role === "teacher" ? "teacher" : "parent";
   const { signup, loading } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -31,7 +33,7 @@ export default function Signup() {
       return;
     }
     try {
-      await signup(name.trim(), email.trim(), password);
+      await signup(name.trim(), email.trim(), password, role);
       router.push({ pathname: "/auth/otp", params: { email: email.trim() } });
     } catch (e: any) {
       setErr(e.message);
@@ -49,9 +51,23 @@ export default function Signup() {
             <Feather name="arrow-left" size={24} color={c("onSurface")} />
           </Pressable>
           <H1 style={{ marginBottom: 8 }}>Create your account</H1>
-          <Body muted style={{ marginBottom: 24, fontSize: 16 }}>
+          <Body muted style={{ marginBottom: 8, fontSize: 16 }}>
             We'll send you a one-time code to verify.
           </Body>
+          <View
+            style={{
+              alignSelf: "flex-start",
+              backgroundColor: c("brandTertiary"),
+              paddingHorizontal: 10,
+              paddingVertical: 4,
+              borderRadius: 999,
+              marginBottom: 20,
+            }}
+          >
+            <Body style={{ color: c("onBrandTertiary"), fontWeight: "700", fontSize: 12 }}>
+              {role === "teacher" ? "TEACHER ACCOUNT" : "PARENT ACCOUNT"}
+            </Body>
+          </View>
 
           {[
             { label: "Your name", value: name, set: setName, testID: "signup-name-input", placeholder: "Priya Sharma" },

@@ -12,27 +12,19 @@ const ROLES = [
     label: "I'm a Parent",
     desc: "Upload books, manage child profiles, track reading.",
     icon: "users" as const,
-    active: true,
   },
   {
-    key: "school",
-    label: "I'm a Teacher / School",
-    desc: "Coming soon — manage classes and assignments.",
+    key: "teacher",
+    label: "I'm a Teacher",
+    desc: "Create classes, assign stories, track student reading.",
     icon: "briefcase" as const,
-    active: false,
-  },
-  {
-    key: "admin",
-    label: "I'm an Admin",
-    desc: "Coming soon — moderate content and users.",
-    icon: "shield" as const,
-    active: false,
   },
 ];
 
 export default function RoleSelect() {
   const { c, RADIUS } = useTheme();
   const router = useRouter();
+  const [chosen, setChosen] = React.useState<string>("parent");
 
   return (
     <SafeAreaView
@@ -56,16 +48,14 @@ export default function RoleSelect() {
           <Pressable
             key={r.key}
             testID={`role-${r.key}-card`}
-            disabled={!r.active}
-            onPress={() => router.push("/auth/signup")}
+            onPress={() => setChosen(r.key)}
             style={{
               backgroundColor: c("surfaceSecondary"),
-              borderColor: r.active ? c("brand") : c("border"),
-              borderWidth: r.active ? 2 : 1,
+              borderColor: chosen === r.key ? c("brand") : c("border"),
+              borderWidth: chosen === r.key ? 2 : 1,
               borderRadius: RADIUS.md,
               padding: 20,
               marginBottom: 12,
-              opacity: r.active ? 1 : 0.55,
               flexDirection: "row",
               alignItems: "center",
             }}
@@ -75,7 +65,7 @@ export default function RoleSelect() {
                 width: 48,
                 height: 48,
                 borderRadius: 8,
-                backgroundColor: r.active ? c("brand") : c("surfaceTertiary"),
+                backgroundColor: chosen === r.key ? c("brand") : c("surfaceTertiary"),
                 alignItems: "center",
                 justifyContent: "center",
                 marginRight: 16,
@@ -84,7 +74,7 @@ export default function RoleSelect() {
               <Feather
                 name={r.icon}
                 size={22}
-                color={r.active ? "#fff" : c("onSurface")}
+                color={chosen === r.key ? "#fff" : c("onSurface")}
               />
             </View>
             <View style={{ flex: 1 }}>
@@ -95,12 +85,21 @@ export default function RoleSelect() {
                 {r.desc}
               </Body>
             </View>
+            <View style={{
+              width: 22, height: 22, borderRadius: 999,
+              borderWidth: 2,
+              borderColor: chosen === r.key ? c("brand") : c("muted"),
+              backgroundColor: chosen === r.key ? c("brand") : "transparent",
+              alignItems: "center", justifyContent: "center",
+            }}>
+              {chosen === r.key && <Feather name="check" size={12} color="#fff" />}
+            </View>
           </Pressable>
         ))}
         <Button
           testID="role-continue-btn"
-          title="Continue as Parent"
-          onPress={() => router.push("/auth/signup")}
+          title={`Continue as ${chosen === "teacher" ? "Teacher" : "Parent"}`}
+          onPress={() => router.push({ pathname: "/auth/signup", params: { role: chosen } })}
           style={{ marginTop: 16 }}
         />
         <Button

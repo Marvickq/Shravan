@@ -56,6 +56,27 @@ export const api = {
   listChildren: () => request("/children"),
   createChild: (body: any) =>
     request("/children", { method: "POST", body: JSON.stringify(body) }),
+  subscriptionStatus: () => request("/subscriptions/status"),
+  startSubscription: (plan_id: string) =>
+    request("/subscriptions/start", {
+      method: "POST",
+      body: JSON.stringify({ plan_id }),
+    }),
+  listClasses: () => request("/classes"),
+  createClass: (body: any) =>
+    request("/classes", { method: "POST", body: JSON.stringify(body) }),
+  getClass: (id: string) => request(`/classes/${id}`),
+  addStudent: (id: string, body: any) =>
+    request(`/classes/${id}/students`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  createAssignment: (id: string, body: any) =>
+    request(`/classes/${id}/assignments`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  classAnalytics: (id: string) => request(`/classes/${id}/analytics`),
   uploadPdf: async (uri: string, name: string) => {
     const token = await getToken();
     const form = new FormData();

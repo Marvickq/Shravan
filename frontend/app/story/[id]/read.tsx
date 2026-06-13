@@ -6,6 +6,7 @@ import { Feather } from "@expo/vector-icons";
 import {
   AudioModule,
   useAudioRecorder,
+  useAudioPlayer,
   RecordingPresets,
 } from "expo-audio";
 import { H1, H2, Body, Card, Button } from "@/src/ui";
@@ -45,6 +46,7 @@ export default function Reader() {
   const scrollRef = useRef<ScrollView | null>(null);
   const sentenceLayouts = useRef<Record<number, number>>({});
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const eventPlayer = useAudioPlayer(null);
   const stopRequested = useRef(false);
 
   useEffect(() => {
@@ -111,6 +113,16 @@ export default function Reader() {
       setBehaviour(m.behaviour);
       if (m.trigger_event && m.audio_event) {
         setTriggered(m.audio_event);
+        const url = m.audio_event.audio_url;
+        if (url) {
+          try {
+            eventPlayer.replace({ uri: url });
+            eventPlayer.volume = 0.7;
+            eventPlayer.play();
+          } catch (err) {
+            console.warn("event audio play failed", err);
+          }
+        }
         setTimeout(() => setTriggered(null), 3500);
       }
       if (m.advance) {

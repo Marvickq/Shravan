@@ -1,0 +1,76 @@
+{
+  "summary": "Iteration 2 testing: Backend 8/8 new tests + 15/15 existing tests pass. Frontend mostly works but two real bugs found. (1) Backend: GET /api/stories audio_events all include audio_url; /api/subscriptions/status returns correct shape with premium=false, free_story_limit=3, monthly+yearly plans; /api/subscriptions/start with plan_id='monthly' or 'yearly' flips premium=true; teacher RBAC fully working (login, create class, add student, create assignment, get analytics, parent gets 403). (2) Frontend: teacher signup TEACHER ACCOUNT banner shown; teacher login routes to /teacher/dashboard with Demo Teacher greeting + 3 stat tiles + pre-seeded 'Grade 3 - Sundaram' class; class detail loads with Assign-story sheet + add-student card; 'Assign story' bottom sheet opens and selecting a story closes sheet and adds it to Assignments list; /subscription page shows Monthly ₹199 + Yearly ₹1499, tap Yearly toggles button to 'Subscribe yearly', tap Subscribe shows 'You're a Shravan member' success state; story detail shows 'Start reading aloud'. BUGS: (a) Teacher tab bar shows a 4th 'classes/[id]' tab — `href: null` is not sufficient on expo-router web for a nested-path Tabs.Screen. (b) Home FEATURED STORY 'Open story' tap does not navigate (URL stays on /home); navigation works only via Library tab. (c) Free-stories-remaining count is NOT visible below 'Start reading aloud' button on story detail (could not 100% confirm cause — demo user became premium during /subscription UI test, so count is correctly hidden for premium; needs re-test with a fresh non-premium parent to validate count rendering for free-tier users).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "Teacher tab bar (app/teacher/_layout.tsx:46)",
+        "issue": "A 4th tab labelled 'classes/[id]' is visible in the bottom tab bar on /teacher/dashboard and /teacher/classes/[id]. `<Tabs.Screen name=\"classes/[id]\" options={{ href: null }} />` does NOT hide nested-path Tabs.Screen entries on expo-router web. Need to also set `tabBarItemStyle: { display: 'none' }` and/or `tabBarButton: () => null`, OR restructure `classes` to a Stack (classes/_layout.tsx with Stack, classes/index.tsx + classes/[id].tsx) so the dynamic route doesn't sit as a sibling Tabs.Screen.",
+        "testID": "tab-classes-id",
+        "priority": "HIGH"
+      },
+      {
+        "component": "Home featured card 'Open story' (app/(tabs)/home.tsx:97-103)",
+        "issue": "Tapping 'Open story' (and the surrounding pill) on the FEATURED STORY card on /home does not navigate — URL stays at /home. The onPress is attached to a Body (Text) component inside a styled View; the View itself is not pressable, so taps on the pill background do not fire. Wrap the pill (or the entire featured card) in <Pressable> or <TouchableOpacity> with onPress routing to `/story/{featured.id}`. Library tap-to-open works correctly, so this is isolated to the home featured card.",
+        "testID": "home-featured-open-btn",
+        "priority": "HIGH"
+      }
+    ],
+    "integration_issues": [
+      {
+        "flow": "Story detail → free-stories-remaining count",
+        "issue": "Spec says 'Below [Start reading aloud] the count of free stories remaining is shown'. Could not verify because the demo@shravan.in account was promoted to premium during the /subscription UI test (subscriptions/start endpoint sets premium_until). Re-test with a freshly-signed-up parent (or reset demo user's premium_until in db) to confirm whether the free-count UI string renders. The endpoint /api/subscriptions/status returns the correct fields; the frontend just needs to display them on the story page for non-premium users.",
+        "affected_testIDs": ["story-start-reading-btn"]
+      }
+    ],
+    "design_issues": [
+      {
+        "screen": "Teacher class detail",
+        "issues": [
+          "Bottom tab bar overlaps the 'Add student' submit button when keyboard / form is open — needs bottom padding or scrollable container to keep button above tab bar height (64px)."
+        ]
+      }
+    ],
+    "react_native_issues": [
+      {
+        "component": "react-native-web (unchanged from iteration 1)",
+        "issue": "Console warning still emitted on every page load: 'props.pointerEvents is deprecated. Use style.pointerEvents'. Library-level (expo-router/safe-area), non-blocking but should be tracked."
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration2.py",
+    "/app/backend/tests/test_shravan_api.py",
+    "/app/test_reports/pytest/iteration2_results.xml",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "Fix teacher tab bar: hide `classes/[id]` route from Tabs. Either add `tabBarButton: () => null` and `tabBarItemStyle: { display: 'none' }` to its options, or restructure classes into a Stack layout (recommended) so dynamic routes are not siblings of tab routes.",
+    "Fix home featured card navigation: wrap 'Open story' pill (or whole featured card) in <Pressable>/<TouchableOpacity> with onPress={() => router.push(`/story/${featured.id}`)}. Currently only the Body text has onPress, so the pill area is dead.",
+    "Verify and surface 'free stories remaining' count below the Start-reading-aloud button on /story/[id] for non-premium parents. Test with a freshly-signed-up parent (the demo user is now premium because /api/subscriptions/start was invoked during UI testing).",
+    "Add `keyboardShouldPersistTaps='handled'` and bottom padding ≥ 80px to the ScrollView on /teacher/classes/[id] so the 'Add student' button is not hidden behind the tab bar.",
+    "Optional: reset demo@shravan.in `premium_until` field in DB if tests expect it to be a free-tier account by default (or test premium-related flows with a separate seeded account)."
+  ],
+  "critical_code_review_comments": [
+    "/app/backend/server.py is now ~995 lines; should be split into routers (auth, stories, subscriptions, classes, speech).",
+    "EVENT_AUDIO_URLS hotlinks to pixabay CDN — fine for dev, but for production a CDN you control is recommended (pixabay URLs occasionally rotate).",
+    "/api/subscriptions/start currently has no idempotency guard; calling it twice extends premium_until by another 30/365 days each time. Consider checking existing premium_until before extending, or storing a stripe-style payment_id.",
+    "MongoDB _id correctly excluded everywhere via projections / pop.",
+    "All env vars (MONGO_URL, JWT_SECRET, EXPO_PUBLIC_BACKEND_URL) read from env without hardcoded defaults — good."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration2.py (created)"
+  ],
+  "success_rate": {
+    "backend": "100% (23/23 — 15 existing + 8 new)",
+    "frontend": "~80% (10/12 review-request flows worked; 2 UI bugs found: teacher tab bar extra 'classes/[id]' tab, home FEATURED 'Open story' non-tappable)"
+  },
+  "seed_data_creation": "Created TEST_Class_e123e7 (teacher class) + TEST_Kid student + 1 assignment (Brave Tiger) via pytest. Created 2 ephemeral parents (test_sub_*, test_sub2_*) for subscription tests. NOTE: demo@shravan.in was upgraded to premium via /api/subscriptions/start during UI testing — main agent may want to reset this in DB for clean retesting.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Backend tests at /app/backend/tests/test_iteration2.py + test_shravan_api.py. Run: EXPO_PUBLIC_BACKEND_URL='https://shravan-read.preview.emergentagent.com' pytest /app/backend/tests/ -v. Key UI selectors: teacher dashboard data-testid pattern unknown (used text selectors). To repro the tab-bar bug: log in as teacher@shravan.in / Teacher@1234 → look at bottom tab bar on any /teacher/* screen → 4 tabs visible instead of 3. To repro home featured nav bug: log in as parent → /home → tap 'Open story' on the orange FEATURED card → URL does not change. Library → Brave Tiger card → /story/{id} works correctly. demo@shravan.in is now PREMIUM in db (premium_until set ~365 days out) from this test run; reset before retesting free-tier flows.",
+  "rca_of_issue": "Bug 1 (teacher tab bar): expo-router on web renders every <Tabs.Screen> as a tab even with `href: null`; that prop only blocks navigation, not visual rendering of the tab button. RCA: missing `tabBarButton: () => null` or `tabBarItemStyle: { display: 'none' }`. Bug 2 (home Open story not tappable): only the inner Body Text has onPress; the wrapping View pill has no Pressable. RCA: tap-area mismatch — user taps the pill background which has no event handler attached."
+}

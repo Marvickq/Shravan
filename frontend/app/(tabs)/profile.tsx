@@ -115,6 +115,7 @@ export default function Profile() {
           </Pressable>
           <Pressable
             testID="profile-subscription-row"
+            onPress={() => router.push("/subscription")}
             style={{ flexDirection: "row", alignItems: "center", padding: 16, backgroundColor: c("surfaceSecondary"), borderRadius: RADIUS.md, borderWidth: 1, borderColor: c("border") }}
           >
             <Feather name="credit-card" size={18} color={c("onSurface")} />

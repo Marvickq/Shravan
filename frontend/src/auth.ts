@@ -19,7 +19,8 @@ type AuthState = {
   signup: (
     name: string,
     email: string,
-    password: string
+    password: string,
+    role?: string
   ) => Promise<{ pendingEmail: string }>;
   verifyOtp: (email: string, code: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -54,10 +55,10 @@ export const useAuth = create<AuthState>((set) => ({
       throw e;
     }
   },
-  signup: async (name, email, password) => {
+  signup: async (name, email, password, role) => {
     set({ loading: true });
     try {
-      await api.signup({ name, email, password, role: "parent" });
+      await api.signup({ name, email, password, role: role || "parent" });
       set({ loading: false });
       return { pendingEmail: email };
     } catch (e) {

@@ -264,6 +264,22 @@ SAMPLE_AUDIO_LIBRARY = {
     "music": ["flute", "drum", "tabla", "song", "music", "dance"],
     "festival": ["diwali", "holi", "eid", "pongal", "festival", "fireworks"],
     "emotion": ["laugh", "cry", "shout", "whisper", "scream"],
+    "horror": ["ghost", "haunt", "scream", "dark"],
+    "character_voice": ["said", "shouted", "whispered", "asked"],
+}
+
+# CDN audio URLs for each event type (CC0 / royalty free hotlinks).
+# These can be swapped freely; the player gracefully handles failures.
+EVENT_AUDIO_URLS: dict[str, str] = {
+    "animal": "https://cdn.pixabay.com/download/audio/2022/03/24/audio_d0c6ff1ecf.mp3",
+    "bird": "https://cdn.pixabay.com/download/audio/2022/02/15/audio_5d34cae3f3.mp3",
+    "weather": "https://cdn.pixabay.com/download/audio/2022/03/10/audio_9f532e7c1f.mp3",
+    "nature": "https://cdn.pixabay.com/download/audio/2022/10/30/audio_4f2c6c8de9.mp3",
+    "music": "https://cdn.pixabay.com/download/audio/2023/01/06/audio_da4ec19b67.mp3",
+    "festival": "https://cdn.pixabay.com/download/audio/2022/10/16/audio_d1718bb6f6.mp3",
+    "emotion": "https://cdn.pixabay.com/download/audio/2022/03/24/audio_07b2818b8d.mp3",
+    "horror": "https://cdn.pixabay.com/download/audio/2022/03/15/audio_d9d6e2a0e3.mp3",
+    "character_voice": "https://cdn.pixabay.com/download/audio/2022/03/15/audio_8cb749aa75.mp3",
 }
 
 
@@ -288,6 +304,7 @@ def heuristic_audio_events(sentences: List[str]) -> List[dict]:
                             "event_type": event_type,
                             "keyword": kw,
                             "label": f"{kw.title()} {event_type}",
+                            "audio_url": EVENT_AUDIO_URLS.get(event_type),
                         }
                     )
                     break
@@ -328,6 +345,7 @@ async def llm_enhance_story(raw_text: str, sentences: List[str]) -> dict:
         data = json.loads(text)
         for ev in data.get("audio_events", []):
             ev["id"] = str(uuid.uuid4())
+            ev["audio_url"] = EVENT_AUDIO_URLS.get(ev.get("event_type", ""))
         return {
             "title": data.get("title") or fallback["title"],
             "synopsis": data.get("synopsis") or fallback["synopsis"],
@@ -614,6 +632,226 @@ async def analytics(user=Depends(current_user)):
 
 
 # ----------------------------------------------------------------------
+# Subscriptions (stubbed — Razorpay keys not provided yet)
+# ----------------------------------------------------------------------
+FREE_STORY_LIMIT = 3
+
+
+async def is_premium(user_id: str) -> bool:
+    u = await db.users.find_one({"id": user_id}, {"_id": 0, "premium_until": 1})
+    if not u:
+        return False
+    until = u.get("premium_until")
+    if not until:
+        return False
+    try:
+        return datetime.fromisoformat(until.replace("Z", "+00:00")) > datetime.now(timezone.utc)
+    except Exception:
+        return False
+
+
+async def finished_story_count(user_id: str) -> int:
+    cursor = db.reading_sessions.find(
+        {"user_id": user_id, "finished": True}, {"_id": 0, "story_id": 1}
+    )
+    items = await cursor.to_list(500)
+    return len({i["story_id"] for i in items})
+
+
+@api.get("/subscriptions/status")
+async def subscription_status(user=Depends(current_user)):
+    premium = await is_premium(user["id"])
+    finished = await finished_story_count(user["id"])
+    return {
+        "premium": premium,
+        "free_story_limit": FREE_STORY_LIMIT,
+        "stories_finished": finished,
+        "stories_remaining": max(0, FREE_STORY_LIMIT - finished) if not premium else None,
+        "locked": (not premium) and finished >= FREE_STORY_LIMIT,
+        "plans": [
+            {"id": "monthly", "label": "Monthly", "amount_inr": 199, "interval": "month"},
+            {"id": "yearly", "label": "Yearly", "amount_inr": 1499, "interval": "year"},
+        ],
+        "provider": "razorpay-stub",
+    }
+
+
+@api.post("/subscriptions/start")
+async def subscription_start(payload: dict, user=Depends(current_user)):
+    plan = payload.get("plan_id", "monthly")
+    months = 12 if plan == "yearly" else 1
+    until = datetime.now(timezone.utc) + timedelta(days=30 * months)
+    await db.users.update_one(
+        {"id": user["id"]},
+        {
+            "$set": {
+                "premium_until": until.isoformat(),
+                "premium_plan": plan,
+                "premium_started_at": datetime.now(timezone.utc).isoformat(),
+            }
+        },
+    )
+    return {
+        "ok": True,
+        "premium_until": until.isoformat(),
+        "plan": plan,
+        "note": "Stubbed payment — wire Razorpay keys to enable real checkout.",
+    }
+
+
+# ----------------------------------------------------------------------
+# Classes & Assignments (teacher role)
+# ----------------------------------------------------------------------
+class ClassCreate(BaseModel):
+    name: str
+    grade: Optional[str] = None
+
+
+class StudentAddBody(BaseModel):
+    name: str
+    email: Optional[EmailStr] = None
+
+
+class AssignmentBody(BaseModel):
+    story_id: str
+    due_date: Optional[str] = None
+
+
+def require_teacher(user: dict) -> None:
+    if user.get("role") != "teacher":
+        raise HTTPException(403, "Teacher role required")
+
+
+@api.get("/classes")
+async def list_classes(user=Depends(current_user)):
+    require_teacher(user)
+    cursor = db.classes.find({"teacher_id": user["id"]}, {"_id": 0})
+    return await cursor.to_list(100)
+
+
+@api.post("/classes")
+async def create_class(body: ClassCreate, user=Depends(current_user)):
+    require_teacher(user)
+    doc = {
+        "id": str(uuid.uuid4()),
+        "teacher_id": user["id"],
+        "name": body.name,
+        "grade": body.grade,
+        "students": [],
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.classes.insert_one(doc)
+    doc.pop("_id", None)
+    return doc
+
+
+@api.get("/classes/{class_id}")
+async def get_class(class_id: str, user=Depends(current_user)):
+    require_teacher(user)
+    cls = await db.classes.find_one(
+        {"id": class_id, "teacher_id": user["id"]}, {"_id": 0}
+    )
+    if not cls:
+        raise HTTPException(404, "Class not found")
+    # attach assignments
+    assignments = await db.assignments.find(
+        {"class_id": class_id}, {"_id": 0}
+    ).to_list(100)
+    cls["assignments"] = assignments
+    return cls
+
+
+@api.post("/classes/{class_id}/students")
+async def add_student(class_id: str, body: StudentAddBody, user=Depends(current_user)):
+    require_teacher(user)
+    cls = await db.classes.find_one({"id": class_id, "teacher_id": user["id"]})
+    if not cls:
+        raise HTTPException(404, "Class not found")
+    student = {
+        "id": str(uuid.uuid4()),
+        "name": body.name,
+        "email": (body.email or "").lower() or None,
+        "added_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.classes.update_one(
+        {"id": class_id}, {"$push": {"students": student}}
+    )
+    return student
+
+
+@api.post("/classes/{class_id}/assignments")
+async def create_assignment(
+    class_id: str, body: AssignmentBody, user=Depends(current_user)
+):
+    require_teacher(user)
+    cls = await db.classes.find_one({"id": class_id, "teacher_id": user["id"]})
+    if not cls:
+        raise HTTPException(404, "Class not found")
+    story = await db.stories.find_one({"id": body.story_id})
+    if not story:
+        raise HTTPException(404, "Story not found")
+    doc = {
+        "id": str(uuid.uuid4()),
+        "class_id": class_id,
+        "story_id": body.story_id,
+        "story_title": story.get("title", ""),
+        "due_date": body.due_date,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.assignments.insert_one(doc)
+    doc.pop("_id", None)
+    return doc
+
+
+@api.get("/classes/{class_id}/analytics")
+async def class_analytics(class_id: str, user=Depends(current_user)):
+    require_teacher(user)
+    cls = await db.classes.find_one({"id": class_id, "teacher_id": user["id"]})
+    if not cls:
+        raise HTTPException(404, "Class not found")
+    students = cls.get("students", [])
+    # Aggregate session stats by matching student email -> user id
+    emails = [s.get("email") for s in students if s.get("email")]
+    user_map: dict[str, dict] = {}
+    if emails:
+        async for u in db.users.find({"email": {"$in": emails}}, {"_id": 0}):
+            user_map[u["email"]] = u
+    rows = []
+    for s in students:
+        u = user_map.get(s.get("email") or "")
+        minutes = 0
+        words = 0
+        finished = 0
+        if u:
+            async for sess in db.reading_sessions.find(
+                {"user_id": u["id"]}, {"_id": 0}
+            ):
+                minutes += sess["duration_seconds"] // 60
+                words += sess["words_read"]
+                if sess["finished"]:
+                    finished += 1
+        rows.append(
+            {
+                "student_id": s["id"],
+                "name": s["name"],
+                "email": s.get("email"),
+                "linked": u is not None,
+                "minutes": minutes,
+                "words": words,
+                "stories_finished": finished,
+            }
+        )
+    return {
+        "class_id": class_id,
+        "class_name": cls["name"],
+        "student_count": len(students),
+        "students": rows,
+        "total_minutes": sum(r["minutes"] for r in rows),
+        "total_words": sum(r["words"] for r in rows),
+    }
+
+
+# ----------------------------------------------------------------------
 # Health
 # ----------------------------------------------------------------------
 @api.get("/")
@@ -676,9 +914,7 @@ SEED_STORIES = [
 
 
 async def seed_stories():
-    count = await db.stories.count_documents({"visibility": "system"})
-    if count >= len(SEED_STORIES):
-        return
+    # Always refresh system stories so newly added fields (audio_url) propagate.
     await db.stories.delete_many({"visibility": "system"})
     for s in SEED_STORIES:
         sentences = s["sentences"]
@@ -703,19 +939,33 @@ async def seed_stories():
 
 async def seed_admin():
     if await db.users.find_one({"email": "demo@shravan.in"}):
-        return
-    await db.users.insert_one(
-        {
-            "id": str(uuid.uuid4()),
-            "email": "demo@shravan.in",
-            "name": "Demo Parent",
-            "role": "parent",
-            "password": hash_password("Demo@1234"),
-            "verified": True,
-            "created_at": datetime.now(timezone.utc).isoformat(),
-        }
-    )
-    logger.info("Seeded demo user demo@shravan.in / Demo@1234")
+        pass
+    else:
+        await db.users.insert_one(
+            {
+                "id": str(uuid.uuid4()),
+                "email": "demo@shravan.in",
+                "name": "Demo Parent",
+                "role": "parent",
+                "password": hash_password("Demo@1234"),
+                "verified": True,
+                "created_at": datetime.now(timezone.utc).isoformat(),
+            }
+        )
+        logger.info("Seeded demo user demo@shravan.in / Demo@1234")
+    if not await db.users.find_one({"email": "teacher@shravan.in"}):
+        await db.users.insert_one(
+            {
+                "id": str(uuid.uuid4()),
+                "email": "teacher@shravan.in",
+                "name": "Demo Teacher",
+                "role": "teacher",
+                "password": hash_password("Teacher@1234"),
+                "verified": True,
+                "created_at": datetime.now(timezone.utc).isoformat(),
+            }
+        )
+        logger.info("Seeded demo teacher teacher@shravan.in / Teacher@1234")
 
 
 # ----------------------------------------------------------------------

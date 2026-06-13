@@ -24,11 +24,21 @@ export default function StoryDetail() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [story, setStory] = useState<any>(null);
+  const [sub, setSub] = useState<any>(null);
 
   useEffect(() => {
     if (!id) return;
     api.getStory(String(id)).then(setStory).catch(() => {});
+    api.subscriptionStatus().then(setSub).catch(() => {});
   }, [id]);
+
+  const startReading = () => {
+    if (sub && sub.locked) {
+      router.push("/subscription");
+      return;
+    }
+    router.push(`/story/${story.id}/read`);
+  };
 
   if (!story) {
     return (
@@ -108,10 +118,15 @@ export default function StoryDetail() {
       >
         <Button
           testID="story-start-reading-btn"
-          title="Start reading aloud"
-          onPress={() => router.push(`/story/${story.id}/read`)}
-          icon={<Feather name="mic" size={18} color="#fff" />}
+          title={sub && sub.locked ? "Unlock to read aloud" : "Start reading aloud"}
+          onPress={startReading}
+          icon={<Feather name={sub && sub.locked ? "lock" : "mic"} size={18} color="#fff" />}
         />
+        {sub && !sub.premium && !sub.locked && sub.stories_remaining !== null && (
+          <Body muted style={{ fontSize: 12, textAlign: "center", marginTop: 8 }}>
+            {sub.stories_remaining} free {sub.stories_remaining === 1 ? "story" : "stories"} remaining
+          </Body>
+        )}
       </View>
     </SafeAreaView>
   );

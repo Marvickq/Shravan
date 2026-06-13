@@ -19,7 +19,8 @@ export default function Otp() {
     setErr(null);
     try {
       await verifyOtp(String(email), code);
-      router.replace("/(tabs)/home");
+      const u = useAuth.getState().user;
+      router.replace(u?.role === "teacher" ? "/teacher/dashboard" : "/(tabs)/home");
     } catch (e: any) {
       setErr(e.message);
     }
