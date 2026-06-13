@@ -1,0 +1,246 @@
+{
+  "app_name": "Shravan",
+  "personality": "8 Hand-Drawn / Journal LIGHT fused with 3 Editorial structure (Customized: Indian Educational, Flat, Warm)",
+  "personality_one_liner": "A culturally grounded, warm, and highly readable voice-interactive reading experience built on flat Indian folk-art aesthetics, completely void of western cartoon tropes.",
+  "color": {
+    "surface": {
+      "light": "#F9F6F2",
+      "dark": "#141412"
+    },
+    "onSurface": {
+      "light": "#1A1A1A",
+      "dark": "#E8E5DF"
+    },
+    "surfaceSecondary": {
+      "light": "#F0EAE1",
+      "dark": "#1E1E1C"
+    },
+    "onSurfaceSecondary": {
+      "light": "#2D2D2D",
+      "dark": "#D1CFC9"
+    },
+    "surfaceTertiary": {
+      "light": "#E8DFD3",
+      "dark": "#2A2A28"
+    },
+    "onSurfaceTertiary": {
+      "light": "#1A1A1A",
+      "dark": "#E8E5DF"
+    },
+    "surfaceInverse": {
+      "light": "#141412",
+      "dark": "#F9F6F2"
+    },
+    "onSurfaceInverse": {
+      "light": "#E8E5DF",
+      "dark": "#1A1A1A"
+    },
+    "brand": {
+      "light": "#D85A30",
+      "dark": "#D85A30"
+    },
+    "brandPrimary": {
+      "light": "#D85A30",
+      "dark": "#D85A30"
+    },
+    "onBrandPrimary": {
+      "light": "#FFFFFF",
+      "dark": "#FFFFFF"
+    },
+    "brandSecondary": {
+      "light": "#BA7517",
+      "dark": "#BA7517"
+    },
+    "onBrandSecondary": {
+      "light": "#FFFFFF",
+      "dark": "#FFFFFF"
+    },
+    "brandTertiary": {
+      "light": "#F2D8C9",
+      "dark": "#4A2214"
+    },
+    "onBrandTertiary": {
+      "light": "#8C3A1F",
+      "dark": "#F2D8C9"
+    },
+    "success": {
+      "light": "#3B6D11",
+      "dark": "#3B6D11"
+    },
+    "onSuccess": {
+      "light": "#FFFFFF",
+      "dark": "#FFFFFF"
+    },
+    "warning": {
+      "light": "#E59F00",
+      "dark": "#E59F00"
+    },
+    "onWarning": {
+      "light": "#FFFFFF",
+      "dark": "#1A1A1A"
+    },
+    "error": {
+      "light": "#B73225",
+      "dark": "#B73225"
+    },
+    "onError": {
+      "light": "#FFFFFF",
+      "dark": "#FFFFFF"
+    },
+    "info": {
+      "light": "#4A6E78",
+      "dark": "#4A6E78"
+    },
+    "onInfo": {
+      "light": "#FFFFFF",
+      "dark": "#FFFFFF"
+    },
+    "border": {
+      "light": "#E6DFD5",
+      "dark": "#2E2E2A"
+    },
+    "borderStrong": {
+      "light": "#D85A30",
+      "dark": "#D85A30"
+    },
+    "divider": {
+      "light": "#E6DFD5",
+      "dark": "#2E2E2A"
+    }
+  },
+  "typography": {
+    "displayFontFamily": "Poppins",
+    "textFontFamily": "Nunito",
+    "scale": {
+      "sm": 12,
+      "base": 14,
+      "lg": 16,
+      "xl": 20,
+      "2xl": 24,
+      "3xl": 32
+    }
+  },
+  "spacing": {
+    "rule": "Strict 8px design grid. Avoid random spacing increments. Ensure generous tap targets (min 44pt) and child-friendly hit areas.",
+    "xs": 4,
+    "sm": 8,
+    "md": 16,
+    "lg": 24,
+    "xl": 32,
+    "2xl": 48,
+    "3xl": 64
+  },
+  "radius_tokens": {
+    "sm": 8,
+    "md": 12,
+    "lg": 20,
+    "pill": 999
+  },
+  "shadow_tier": 0,
+  "navigation": "bottom_tabs",
+  "icon_set": "Feather",
+  "glassmorphism": {
+    "enabled": false,
+    "do's": [],
+    "dont's": ["Strictly DO NOT use any glassmorphism, blur effects, gradients, or shadows. Keep all surfaces flat and distinct using color blocking and borders."]
+  },
+  "platform_libraries": {
+    "glass": {
+      "ios": "none",
+      "android": "none",
+      "low_end_android_fallback": "solid surfaceSecondary"
+    },
+    "image": "expo-image",
+    "blur": "none",
+    "bottom_sheet": "@gorhom/bottom-sheet",
+    "animation": "react-native-reanimated",
+    "gesture": "react-native-gesture-handler"
+  },
+  "screens": [
+    {
+      "name": "Onboarding & Auth",
+      "purpose": "Introduce the app's value, select role (Parent/Child), and handle login/OTP.",
+      "states": {
+        "loading": "Flat full-screen warm cream bg with a terracotta spinner.",
+        "empty": "N/A",
+        "error": "Flat error banner at top with a solid rust red color."
+      },
+      "layout": "Full-bleed illustration area taking the top half. Bottom half has large legible headings in Poppins, subtext in Nunito, and bold 20px radius buttons in Terracotta (#D85A30)."
+    },
+    {
+      "name": "Parent Home",
+      "purpose": "Dashboard for parents showing child's current progress, suggested books, and profile switching.",
+      "states": {
+        "loading": "Skeleton loader matching the 12px radius card shapes.",
+        "empty": "Illustration of a child reading, inviting the parent to explore the library.",
+        "error": "Retry block with a friendly illustration."
+      },
+      "layout": "Header with greeting and child profile chip. 'Currently Reading' featured flat card. Horizontal scroll list for 'Suggested Stories'. Uses strict 8px grid and solid flat color blocks for elevation."
+    },
+    {
+      "name": "Library",
+      "purpose": "Explore available stories and upload PDFs.",
+      "states": {
+        "loading": "Staggered grid skeleton.",
+        "empty": "Illustration indicating no stories found for the selected filter.",
+        "error": "Retry button."
+      },
+      "layout": "Sticky top bar with search and pill-shaped mood/category filters in brandTertiary. 2-column grid of story cards (md radius). Floating Action Button (FAB) or prominent fixed bottom bar for 'Upload PDF' CTA."
+    },
+    {
+      "name": "Story Detail",
+      "purpose": "Show story synopsis, preview audio events, and initiate reading.",
+      "states": {
+        "loading": "Spinner centered.",
+        "empty": "N/A",
+        "error": "Retry button."
+      },
+      "layout": "Large cover image with solid color background. Synopsis text using Nunito base size. A section showing 'Audio Effects in this Story' using flat icon chips. Sticky 'Start Reading' button at the bottom."
+    },
+    {
+      "name": "Reader Screen",
+      "purpose": "The core child experience: tracking reading aloud and triggering sounds.",
+      "states": {
+        "loading": "Preparing story indicator.",
+        "empty": "N/A",
+        "error": "Mic permission error state with clear CTA."
+      },
+      "layout": "Distraction-free. Full-screen large text (Nunito 24px+). The active/current sentence is highlighted in #D85A30. Fixed bottom bar or floating pill showing mic status with a flat pulsing animation, pause/resume controls, and an event indicator chip when an audio effect triggers."
+    },
+    {
+      "name": "Progress Dashboard",
+      "purpose": "Celebrate milestones, show reading streak, time, and words read.",
+      "states": {
+        "loading": "Skeleton stats grid.",
+        "empty": "Start your first reading session to see progress.",
+        "error": "Error fetching stats."
+      },
+      "layout": "Celebratory header. Grid of stat cards (12px radius, surfaceSecondary background). Simple, flat bar charts or progress rings using the Success (#3B6D11) and Primary (#D85A30) colors."
+    }
+  ],
+  "images": {
+    "hero_story_cover": {
+      "url": "https://images.unsplash.com/photo-1719495851101-fec492c51a08?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzNTl8MHwxfHNlYXJjaHwxfHxJbmRpYW4lMjBzdG9yeWJvb2slMjBpbGx1c3RyYXRpb258ZW58MHx8fHwxNzgxMzQ5Nzk3fDA&ixlib=rb-4.1.0&q=85",
+      "alt": "Mughal painting of a royal court, representing traditional Indian storytelling"
+    },
+    "child_reading_illustration": {
+      "url": "https://images.unsplash.com/photo-1599689868384-59cb2b01bb21?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NTZ8MHwxfHNlYXJjaHwyfHxjaGlsZCUyMHJlYWRpbmclMjBib29rJTIwd2FybXxlbnwwfHx8fDE3ODEzNDk3OTd8MA&ixlib=rb-4.1.0&q=85",
+      "alt": "Child reading a book in warm tones"
+    },
+    "jungle_animal_illustration": {
+      "url": "https://images.unsplash.com/photo-1657703685466-8c60b84a222d?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1Mjh8MHwxfHNlYXJjaHwyfHxJbmRpYW4lMjBqdW5nbGUlMjBhbmltYWx8ZW58MHx8fHwxNzgxMzQ5Nzk3fDA&ixlib=rb-4.1.0&q=85",
+      "alt": "Indian jungle tiger representing a character in a children's story"
+    }
+  },
+  "instructions_to_main_agent": [
+    "STRICTLY follow the defined color palette provided by the user. Do not introduce stray colors, gradients, neon, or any shadows.",
+    "There must be NO glassmorphism or blur effects. Use solid flat colors for elevation and hierarchy (e.g., surfaceSecondary on surface).",
+    "Use Poppins for headings and Nunito for all body/text elements. Scale must be large and child-friendly, especially on the Reader Screen.",
+    "Implement a strict 8px design grid. Ensure touch targets are at least 44x44pt.",
+    "Card border radius is 12px (md), and primary buttons are 20px (lg).",
+    "For the Reader Screen, ensure the current sentence highlight dynamically changes the text color to #D85A30, keeping the remaining text highly readable.",
+    "Use Indian folk art inspired flat aesthetics (represented via colors and imagery choices) and avoid any western cartoon elements.",
+    "When displaying stats on the Progress Dashboard, use flat, solid-colored progress bars and rings. Do not use gradients.",
+    "Ensure high contrast and accessibility for both Light Mode (#F9F6F2) and Dark Mode (#141412)."
+  ]
+}
