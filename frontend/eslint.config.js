@@ -6,5 +6,9 @@ module.exports = defineConfig([
   expoConfig,
   {
     ignores: ['dist/*'],
+    rules: {
+      // React Native does not need HTML entity escaping inside <Text>
+      'react/no-unescaped-entities': 'off',
+    },
   },
 ]);
