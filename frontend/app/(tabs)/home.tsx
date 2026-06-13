@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from "react";
-import { View, ScrollView, RefreshControl, FlatList } from "react-native";
+import { View, ScrollView, RefreshControl, FlatList, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useFocusEffect } from "expo-router";
 import { Feather } from "@expo/vector-icons";
@@ -70,8 +70,9 @@ export default function Home() {
         </View>
 
         {featured && (
-          <View
+          <Pressable
             testID="home-featured-card"
+            onPress={() => router.push(`/story/${featured.id}`)}
             style={{
               backgroundColor: featured.cover_color || c("brand"),
               borderRadius: RADIUS.md,
@@ -96,14 +97,13 @@ export default function Home() {
             >
               <Body
                 testID="home-featured-open-btn"
-                onPress={() => router.push(`/story/${featured.id}`)}
                 style={{ color: "#fff", fontWeight: "700" }}
               >
                 Open story
               </Body>
               <Feather name="arrow-right" size={16} color="#fff" />
             </View>
-          </View>
+          </Pressable>
         )}
 
         <H2 style={{ marginBottom: 12 }}>Suggested for you</H2>

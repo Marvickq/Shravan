@@ -88,7 +88,7 @@ export default function ClassDetail() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: c("surface") }} edges={["top", "bottom"]}>
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
-        <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 32 }} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 96 }} keyboardShouldPersistTaps="handled">
           <Pressable testID="cls-back-btn" onPress={() => router.back()} hitSlop={12} style={{ marginBottom: 12 }}>
             <Feather name="arrow-left" size={24} color={c("onSurface")} />
           </Pressable>

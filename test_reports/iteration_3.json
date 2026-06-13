@@ -1,0 +1,37 @@
+{
+  "summary": "Iteration 3 retest (frontend only). All 3 review items pass. (1) BUGFIX 1 - Teacher tab bar now shows EXACTLY 3 tabs (Dashboard, Classes, Profile) on /teacher/dashboard, /teacher/classes, and /teacher/classes/[id]; the dynamic 'classes/[id]' tab is fully hidden. (2) BUGFIX 2 - Home FEATURED STORY card is now wrapped in <Pressable testID='home-featured-card'> and tapping anywhere on the card navigates to /story/{featured.id} (verified: tapped card -> URL became /story/bbbe161b-...). (3) PAYWALL LABEL - With premium reset on demo@shravan.in and reading_sessions cleared, the label '3 free stories remaining' is now visible directly below the 'Start reading aloud' button on /story/[id]. (4) REGRESSION - Library cards still navigate to story detail. Teacher class detail still loads with student roster and 'Assign story' bottom sheet. NOTE: I made one tiny fix to /app/frontend/app/teacher/_layout.tsx — the previous fix combined `href: null` AND `tabBarButton: () => null` on the same Tabs.Screen which throws an expo-router runtime error ('Cannot use `href` and `tabBarButton` together') producing a red screen on every teacher route. Removed `href: null` (kept `tabBarButton: () => null` + `tabBarItemStyle: { display: 'none' }`), then re-tested — works perfectly.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [],
+    "react_native_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/iteration_2.json",
+    "/app/backend/tests/test_iteration2.py",
+    "/app/backend/tests/test_shravan_api.py"
+  ],
+  "action_items": [
+    "None blocking. Optional: consider restructuring /app/frontend/app/teacher/classes into a nested Stack (classes/_layout.tsx + classes/index.tsx + classes/[id].tsx) instead of relying on tabBarButton:null tricks, for cleaner expo-router semantics."
+  ],
+  "critical_code_review_comments": [
+    "Avoid combining `href: null` with `tabBarButton: () => null` on Tabs.Screen — expo-router treats these as mutually exclusive and throws. Use one or the other.",
+    "/app/backend/server.py still ~995 lines; should be split into routers (carried over from iteration 2)."
+  ],
+  "updated_files": [
+    "/app/frontend/app/teacher/_layout.tsx (removed `href: null` from classes/[id] Tabs.Screen to fix red-screen error introduced by previous fix attempt)"
+  ],
+  "success_rate": {
+    "backend": "not retested (per scope: frontend only; backend 23/23 from iteration 2)",
+    "frontend": "100% on all 4 review-request items (teacher 3-tab bar, featured card nav, free-count label, library/class-detail regression)"
+  },
+  "seed_data_creation": "No new seed data created. Existing TEST_Class_e123e7 from iteration 2 is still present in teacher's class list.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Iteration 2 bugs fully fixed and verified in iteration 3. Teacher layout now uses tabBarButton:()=>null + tabBarItemStyle:{display:'none'} (no href:null). Home featured card uses <Pressable testID='home-featured-card' onPress={() => router.push(`/story/${featured.id}`)}>. Paywall string template on /story/[id]: `${sub.stories_remaining} free ${sub.stories_remaining === 1 ? 'story' : 'stories'} remaining` and is rendered only when sub && !sub.premium && !sub.locked && sub.stories_remaining !== null.",
+  "rca_of_issue": "Previous fix attempt for the teacher tab bar bug added both `href: null` and `tabBarButton: () => null` on the same Tabs.Screen. expo-router v3+ throws `Cannot use 'href' and 'tabBarButton' together` at the TabsClient layout layer, breaking the entire teacher route tree (every teacher screen showed an Uncaught Error red box). Fix: keep only `tabBarButton: () => null` + `tabBarItemStyle: { display: 'none' }`. After this 1-line removal, the dynamic [id] tab is correctly hidden and teacher dashboard renders normally."
+}

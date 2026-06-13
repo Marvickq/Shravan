@@ -43,7 +43,13 @@ export default function TeacherLayout() {
           tabBarIcon: ({ color }) => <Feather name="user" size={22} color={color} />,
         }}
       />
-      <Tabs.Screen name="classes/[id]" options={{ href: null }} />
+      <Tabs.Screen
+        name="classes/[id]"
+        options={{
+          tabBarButton: () => null,
+          tabBarItemStyle: { display: "none" },
+        }}
+      />
     </Tabs>
   );
 }
