@@ -25,6 +25,18 @@ const EVENT_LABELS: Record<string, { icon: any; label: string }> = {
   character_voice: { icon: "user", label: "Voice" },
 };
 
+const LOCAL_SOUNDS: Record<string, any> = {
+  animal: require("@/assets/sounds/animal.mp3"),
+  bird: require("@/assets/sounds/bird.mp3"),
+  weather: require("@/assets/sounds/weather.mp3"),
+  nature: require("@/assets/sounds/nature.mp3"),
+  music: require("@/assets/sounds/music.mp3"),
+  festival: require("@/assets/sounds/festival.mp3"),
+  emotion: require("@/assets/sounds/emotion.mp3"),
+  horror: require("@/assets/sounds/horror.mp3"),
+  character_voice: require("@/assets/sounds/character_voice.mp3"),
+};
+
 const CHUNK_MS = 4000;
 
 export default function Reader() {
@@ -113,10 +125,11 @@ export default function Reader() {
       setBehaviour(m.behaviour);
       if (m.trigger_event && m.audio_event) {
         setTriggered(m.audio_event);
-        const url = m.audio_event.audio_url;
-        if (url) {
+        const eventType = m.audio_event.event_type;
+        const source = LOCAL_SOUNDS[eventType];
+        if (source) {
           try {
-            eventPlayer.replace({ uri: url });
+            eventPlayer.replace(source);
             eventPlayer.volume = 0.7;
             eventPlayer.play();
           } catch (err) {
